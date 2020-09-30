@@ -2,14 +2,19 @@
 
 import sqlite3
 import os
+import sys
 import time
 
 
-MUSIC_ROOT_DIR =  'E:\\Music-Beets'  # Must be an absolute path.
+MUSIC_ROOT_DIR = r'E:\Music-Beets'
 BEETS_DB_FILEPATH = '/home/bart/music_library.db'
+MPD_DB_FORMAT = 2
 TAGCACHE_FILEPATH = '/home/bart/tagcache_test'
-GENRE_DELIMITER = ','
+GENRE_DELIMITER = ', '
 MPD_VERSION = '0.21.19'
+
+FS_CHARSET = sys.getfilesystemencoding().upper()
+
 
 
 if __name__ == '__main__':
@@ -52,32 +57,31 @@ if __name__ == '__main__':
     ''')
 
     # Write tag_cache
-    tagcache_filehandle.writelines('''\
-    info_begin
-    format: 2
-    mpd_version: 0.19.1
-    fs_charset: UTF-8
-    tag: Artist
-    tag: ArtistSort
-    tag: Album
-    tag: AlbumSort
-    tag: AlbumArtist
-    tag: AlbumArtistSort
-    tag: Title
-    tag: Track
-    tag: Name
-    tag: Genre
-    tag: Date
-    tag: Composer
-    tag: Performer
-    tag: Disc
-    tag: MUSICBRAINZ_ARTISTID
-    tag: MUSICBRAINZ_ALBUMID
-    tag: MUSICBRAINZ_ALBUMARTISTID
-    tag: MUSICBRAINZ_TRACKID
-    tag: MUSICBRAINZ_RELEASETRACKID
-    info_end
-    ''')
+    tagcache_filehandle.write(os.linesep.join((
+         'info_begin',
+        f'format: {MPD_DB_FORMAT}',
+        f'mpd_version: {MPD_VERSION}',
+        f'fs_charset: {FS_CHARSET}',
+        'tag: Artist',
+        'tag: ArtistSort',
+        'tag: Album',
+        'tag: AlbumSort',
+        'tag: AlbumArtist',
+        'tag: AlbumArtistSort',
+        'tag: Title',
+        'tag: Track',
+        'tag: Name',
+        'tag: Genre',
+        'tag: Date',
+        'tag: Composer',
+        'tag: Performer',
+        'tag: Disc',
+        'tag: MUSICBRAINZ_ARTISTID',
+        'tag: MUSICBRAINZ_ALBUMID',
+        'tag: MUSICBRAINZ_ALBUMARTISTID',
+        'tag: MUSICBRAINZ_TRACKID',
+        'tag: MUSICBRAINZ_RELEASETRACKID',
+        'info_end')) + os.linesep)
 
     last_processed_album_directory = None
     for (\
@@ -114,18 +118,18 @@ if __name__ == '__main__':
             tagcache_filehandle.write(os.linesep.join((
                 f'directory: {album_directory}',
                 f'mtime: 0',  # Currently hard-coded at 0.
-                f'begin: {album_directory}')))
+                f'begin: {album_directory}')) + os.linesep)
             last_processed_album_directory = album_directory
 
         # Write song block
         tagcache_filehandle.write(os.linesep.join((
-            f'song_begin: {path.split(ospath.sep)[-1]}'
+            f'song_begin: {path.split(ospath.sep)[-1]}',
             f'Time: {length:.6f}',
             f'Artist: {artist}',
             f'Album: {album}',
             f'AlbumArtist: {albumartist}',
             f'Title: {title}',
-            f'Track: {track}')))
+            f'Track: {track}')) + os.linesep)
         for genre_value in genres:
             tagcache_filehandle.write(f'Genre: {genre_value}' + os.linesep)
         tagcache_filehandle.write(os.linesep.join((
@@ -133,8 +137,8 @@ if __name__ == '__main__':
             f'Disc: {disc}',
             f'Composer: {composer}',
             f'Performer: {arranger}',  # Not sure about this one
-            f'mtime: 0'  # Currently hard-coded at 0.
-            f'song_end')))
+            f'mtime: 0',  # Currently hard-coded at 0.
+            f'song_end')) + os.linesep)
 
     # Cleanup
     cursor.close()
