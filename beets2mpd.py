@@ -13,26 +13,26 @@ TAGCACHE_FILEPATH = '/home/bart/tagcache_test'
 GENRE_DELIMITER = ', '
 MPD_VERSION = '0.21.19'
 
-FS_CHARSET = sys.getfilesystemencoding().upper()
-
-
 
 if __name__ == '__main__':
     starttime = time.time()
 
+    fs_charset = sys.getfilesystemencoding().upper()
+
+    # Windows paths or UNIX paths.
     if MUSIC_ROOT_DIR[0] == '/':
         import posixpath as ospath
     else:
         import ntpath as ospath
 
-    # Database connection
+    # Database connection.
     db_connection = sqlite3.connect(BEETS_DB_FILEPATH)
     cursor = db_connection.cursor()
 
-    # Tagcache file initialisation
+    # Tagcache file initialisation.
     tagcache_filehandle = open(TAGCACHE_FILEPATH, 'w')
 
-    # Fetch items from beets database
+    # Query the Beets database for all items.
     cursor.execute('''
         select
             items.path,
@@ -56,12 +56,12 @@ if __name__ == '__main__':
 
     ''')
 
-    # Write tag_cache
+    # Write tag_cache header.
     tagcache_filehandle.write(os.linesep.join((
          'info_begin',
         f'format: {MPD_DB_FORMAT}',
         f'mpd_version: {MPD_VERSION}',
-        f'fs_charset: {FS_CHARSET}',
+        f'fs_charset: {fs_charset}',
         'tag: Artist',
         'tag: ArtistSort',
         'tag: Album',
@@ -84,44 +84,42 @@ if __name__ == '__main__':
         'info_end')) + os.linesep)
 
     last_processed_album_directory = None
-    for (\
-        path,\
-        length,\
-        artist,\
-        album,\
-        albumartist,\
-        title,\
-        track,\
-        genre,\
-        year,\
-        disc,\
-        composer,\
-        arranger\
-    ) in cursor:
+    for (path,
+         length,
+         artist,
+         album,
+         albumartist,
+         title,
+         track,
+         genre,
+         year,
+         disc,
+         composer,
+         arranger) in cursor:
         if isinstance(path, bytes):
             path = path.decode('utf-8')
         album_directory = ospath.dirname(path[len(MUSIC_ROOT_DIR):]).lstrip(ospath.sep)
 
-        # `genre` can be comma separated multi-valued, so rename it to `genres`
-        # for clarity while parsing.
+        # `genre` can be multi-valued, so rename it to `genres` for clarity while parsing.
         if genre:
             genres = genre.split(GENRE_DELIMITER)
         else:
             genres = ''
 
-        # If album changed, close the previous block
+        # If album changed, close the previous block.
         if album_directory != last_processed_album_directory and last_processed_album_directory is not None:
-            tagcache_filehandle.write(f'end: {last_processed_album_directory}' + os.linesep) # previous directory :)
+            # Previous directory:
+            tagcache_filehandle.write(f'end: {last_processed_album_directory}' + os.linesep)
 
-        # If album changed, open new block
+        # If album changed, open new block.
         if album_directory != last_processed_album_directory:
             tagcache_filehandle.write(os.linesep.join((
                 f'directory: {album_directory}',
-                f'mtime: 0',  # Currently hard-coded at 0.
+                f'mtime: 0',
                 f'begin: {album_directory}')) + os.linesep)
             last_processed_album_directory = album_directory
 
-        # Write song block
+        # Write song block.
         tagcache_filehandle.write(os.linesep.join((
             f'song_begin: {path.split(ospath.sep)[-1]}',
             f'Time: {length:.6f}',
@@ -136,11 +134,11 @@ if __name__ == '__main__':
             f'Date: {year}',
             f'Disc: {disc}',
             f'Composer: {composer}',
-            f'Performer: {arranger}',  # Not sure about this one
-            f'mtime: 0',  # Currently hard-coded at 0.
+            f'Performer: {arranger}',  # Not sure about this one.
+            f'mtime: 0',
             f'song_end')) + os.linesep)
 
-    # Cleanup
+    # Cleanup.
     cursor.close()
     db_connection.close()
     tagcache_filehandle.close()
