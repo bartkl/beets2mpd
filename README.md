@@ -1,11 +1,7 @@
 # `beets2mpd`
-This script generates a MPD tag cache file from a Beets database.
+This script generates a MPD tag cache file from a Beets database. It enables MPD tag caching sourced from the beets library database instead of from the audio file tags.
 
-This enables MPD tag caching sourced from the beets library database instead of from the audio file tags.
-
-Has only been used on Linux so far, but it should work on Windows and Mac as well.
-
-Windows paths for music files are supported and tested.
+It has only been used on Linux so far, but it should work on Windows and Mac as well. Windows paths for music files are supported and tested.
 
 ## Installation
 Make sure you have Python 3.7 or higher installed. Other than that, there are no dependencies.
