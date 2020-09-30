@@ -13,8 +13,6 @@ TAGCACHE_FILEPATH = '/home/bart/tagcache_test'
 GENRE_DELIMITER = ', '
 MPD_VERSION = '0.21.19'
 
-N = os.sep
-
 
 if __name__ == '__main__':
     starttime = time.time()
