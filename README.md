@@ -70,7 +70,7 @@ In many ways this is preferable to the solution this script enables you with, bu
 The solution I envisioned is simpler: use the original MPD, but provide it with a tag cache from a different source which is based on the Beets database. This script does exactly that: it reads a Beets database, and generates an MPD tag cache file.
 
 ## Limitations
-This script originally was written by reverse engineering what my MPD tag cache file looked like, but since then I have read the MPD source code to make sure it conforms. During this process, I discovered that my implementation has the following limitations:
+This script originally was written by reverse engineering what my MPD tag cache file looked like. So far I'm aware of the following limitations of my implementation:
 
 * Only regular files are supported, so no archives, containers or playlists.
 * All `mtime` fields in the tag cache file are set to `0`.
@@ -80,6 +80,7 @@ This script originally was written by reverse engineering what my MPD tag cache 
     - This sounds like a major limitation/issue, but I have easily worked around it for the last few years. The clients I used were ncmpcpp, mpc, and MPDroid.
     - Newer versions of MPD have automatic database updating based on file changes. Because of this limitation, you won't be able to do that. However, writing your own scripts to mimic this feature is fairly doable.
 * The format of the generated tagcache file is not based on any technical specification, but on my reverse engineering of what the file's structure is like. This is not ideal, but I have been using this script for some years now, and it is has never generated a corrupt or faulty file.
+* The script reads directly from Beets's database, instead of through the API. This is bad practice, and it can or could lead to issues. The API is [terribly slow however](https://github.com/beetbox/beets/issues/2388), so that's why I chose to go this route. So far I have not encountered issues.
 * This plugin has been created for personal use only and possibly needs work to perform on other devices and installations.
 
 ## Roadmap
