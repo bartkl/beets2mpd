@@ -95,7 +95,7 @@ if __name__ == '__main__':
         arranger\
     ) in cursor:
         if isinstance(path, bytes):
-            path = path.decode('utf8')
+            path = path.decode('utf-8')
         album_directory = ospath.dirname(path[len(MUSIC_ROOT_DIR):]).lstrip(ospath.sep)
 
         # `genre` can be comma separated multi-valued, so rename it to `genres`
@@ -107,31 +107,34 @@ if __name__ == '__main__':
 
         # If album changed, close the previous block
         if album_directory != last_processed_album_directory and last_processed_album_directory is not None:
-            tagcache_filehandle.write('end: %s\n' % last_processed_album_directory) # previous directory :)
+            tagcache_filehandle.write(f'end: {last_processed_album_directory}' + os.linesep) # previous directory :)
 
         # If album changed, open new block
         if album_directory != last_processed_album_directory:
-            tagcache_filehandle.write('directory: %s\n' % album_directory) 
-            tagcache_filehandle.write('mtime: 0\n') 
-            tagcache_filehandle.write('begin: %s\n' % album_directory)
+            tagcache_filehandle.write(os.linesep.join((
+                f'directory: {album_directory}',
+                f'mtime: 0',  # Currently hard-coded at 0.
+                f'begin: {album_directory}')))
             last_processed_album_directory = album_directory
 
         # Write song block
-        tagcache_filehandle.write('song_begin: %s\n' % path.split(ospath.sep)[-1])
-        tagcache_filehandle.write('Time: %.6f\n' % length)
-        tagcache_filehandle.write('Artist: %s\n' % artist)
-        tagcache_filehandle.write('Album: %s\n' % album)
-        tagcache_filehandle.write('AlbumArtist: %s\n' % albumartist)
-        tagcache_filehandle.write('Title: %s\n' % title)
-        tagcache_filehandle.write('Track: %s\n' % track)
-        for genre_ in genres:
-            tagcache_filehandle.write('Genre: %s\n' % genre_)
-        tagcache_filehandle.write('Date: %s\n' % year)
-        tagcache_filehandle.write('Disc: %s\n' % disc)
-        tagcache_filehandle.write('Composer: %s\n' % composer)
-        tagcache_filehandle.write('Performer: %s\n' % arranger) # Not sure about this one
-        tagcache_filehandle.write('mtime: 0\n') 
-        tagcache_filehandle.write('song_end\n')
+        tagcache_filehandle.write(os.linesep.join((
+            f'song_begin: {path.split(ospath.sep)[-1]}'
+            f'Time: {length:.6f}',
+            f'Artist: {artist}',
+            f'Album: {album}',
+            f'AlbumArtist: {albumartist}',
+            f'Title: {title}',
+            f'Track: {track}')))
+        for genre_value in genres:
+            tagcache_filehandle.write(f'Genre: {genre_value}' + os.linesep)
+        tagcache_filehandle.write(os.linesep.join((
+            f'Date: {year}',
+            f'Disc: {disc}',
+            f'Composer: {composer}',
+            f'Performer: {arranger}',  # Not sure about this one
+            f'mtime: 0'  # Currently hard-coded at 0.
+            f'song_end')))
 
     # Cleanup
     cursor.close()
