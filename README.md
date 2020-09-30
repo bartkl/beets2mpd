@@ -49,7 +49,7 @@ The reasons that motivated me to want this, are:
 1. _I do not want to make modifications to my music files, i.e. no file renames or tag writes_.
     - Among my reasons for this is that this allows for more efficiency backing up. For example, changing a single tag value will trigger a full copy of that file during backup. This means that if you change a lot of tags, say by renaming a genre, that backing up those files will potentially take a very long time.
 2. _I want to be able to use multiple genres per song or album_.
-    - MPD supports this, but Beets does not (yet, see [#505](https://github.com/beetbox/beets/issues/505). This script will parse multiple genres from the `genre` field in the Beets database by a delimiter that you can choose yourself, and write these to the tagcache file.
+    - MPD supports this, but Beets does not (yet, see [#505](https://github.com/beetbox/beets/issues/505)). This script will parse multiple genres from the `genre` field in the Beets database by a delimiter that you can choose yourself, and write these to the tagcache file.
 
 (For those who think: why not use Beets's BPD plugin, please read the section _Why not BPD_ below.)
 
@@ -82,7 +82,7 @@ This script originally was written by reverse engineering what my MPD tag cache 
 * This plugin has been created for personal use only and possibly needs work to perform on other devices and installations.
 
 ## Roadmap
-Although the code is pretty optimized, Python is relatively slow nonetheless. For low-resource devices such as SoC's like the Raspberry Pi, this script can take seconds on large libraries.
+Although the code is already pretty optimized (if you were wondering why it is so devoid of structure and extremely iterative, this is why), Python is relatively slow nonetheless. For low-resource devices such as SoC's like the Raspberry Pi, this script can take seconds on large libraries.
 
 Options:
 * Redo the entire implementation in C. (Prefered)
