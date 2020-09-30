@@ -13,6 +13,8 @@ TAGCACHE_FILEPATH = '/home/bart/tagcache_test'
 GENRE_DELIMITER = ', '
 MPD_VERSION = '0.21.19'
 
+N = os.sep
+
 
 if __name__ == '__main__':
     starttime = time.time()
@@ -53,35 +55,35 @@ if __name__ == '__main__':
         on items.album_id = albums.id
 
         order by items.path, items.track
-
     ''')
 
     # Write tag_cache header.
-    tagcache_filehandle.write(os.linesep.join((
-         'info_begin',
-        f'format: {MPD_DB_FORMAT}',
-        f'mpd_version: {MPD_VERSION}',
-        f'fs_charset: {fs_charset}',
-        'tag: Artist',
-        'tag: ArtistSort',
-        'tag: Album',
-        'tag: AlbumSort',
-        'tag: AlbumArtist',
-        'tag: AlbumArtistSort',
-        'tag: Title',
-        'tag: Track',
-        'tag: Name',
-        'tag: Genre',
-        'tag: Date',
-        'tag: Composer',
-        'tag: Performer',
-        'tag: Disc',
-        'tag: MUSICBRAINZ_ARTISTID',
-        'tag: MUSICBRAINZ_ALBUMID',
-        'tag: MUSICBRAINZ_ALBUMARTISTID',
-        'tag: MUSICBRAINZ_TRACKID',
-        'tag: MUSICBRAINZ_RELEASETRACKID',
-        'info_end')) + os.linesep)
+    tagcache_filehandle.write(f'''\
+info_begin
+format: {MPD_DB_FORMAT}
+mpd_version: {MPD_VERSION}
+fs_charset: {fs_charset}
+tag: Artist
+tag: ArtistSort
+tag: Album
+tag: AlbumSort
+tag: AlbumArtist
+tag: AlbumArtistSort
+tag: Title
+tag: Track
+tag: Name
+tag: Genre
+tag: Date
+tag: Composer
+tag: Performer
+tag: Disc
+tag: MUSICBRAINZ_ARTISTID
+tag: MUSICBRAINZ_ALBUMID
+tag: MUSICBRAINZ_ALBUMARTISTID
+tag: MUSICBRAINZ_TRACKID
+tag: MUSICBRAINZ_RELEASETRACKID
+info_end
+''')
 
     last_processed_album_directory = None
     for (path,
@@ -109,34 +111,39 @@ if __name__ == '__main__':
         # If album changed, close the previous block.
         if album_directory != last_processed_album_directory and last_processed_album_directory is not None:
             # Previous directory:
-            tagcache_filehandle.write(f'end: {last_processed_album_directory}' + os.linesep)
+            tagcache_filehandle.write(f'''\
+end: {last_processed_album_directory}
+''')
 
         # If album changed, open new block.
         if album_directory != last_processed_album_directory:
-            tagcache_filehandle.write(os.linesep.join((
-                f'directory: {album_directory}',
-                f'mtime: 0',
-                f'begin: {album_directory}')) + os.linesep)
+            tagcache_filehandle.write(f'''\
+directory: {album_directory}
+mtime: 0
+begin: {album_directory}
+''')
             last_processed_album_directory = album_directory
 
         # Write song block.
-        tagcache_filehandle.write(os.linesep.join((
-            f'song_begin: {path.split(ospath.sep)[-1]}',
-            f'Time: {length:.6f}',
-            f'Artist: {artist}',
-            f'Album: {album}',
-            f'AlbumArtist: {albumartist}',
-            f'Title: {title}',
-            f'Track: {track}')) + os.linesep)
+        tagcache_filehandle.write(f'''\
+song_begin: {path.split(ospath.sep)[-1]}
+Time: {length:.6f}
+Artist: {artist}
+Album: {album}
+AlbumArtist: {albumartist}
+Title: {title}
+Track: {track}
+''')
         for genre_value in genres:
             tagcache_filehandle.write(f'Genre: {genre_value}' + os.linesep)
-        tagcache_filehandle.write(os.linesep.join((
-            f'Date: {year}',
-            f'Disc: {disc}',
-            f'Composer: {composer}',
-            f'Performer: {arranger}',  # Not sure about this one.
-            f'mtime: 0',
-            f'song_end')) + os.linesep)
+        tagcache_filehandle.write(f'''\
+Date: {year}
+Disc: {disc}
+Composer: {composer}
+Performer: {arranger}
+mtime: 0
+song_end
+''')
 
     # Cleanup.
     cursor.close()
