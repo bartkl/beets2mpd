@@ -5,7 +5,7 @@ import os
 import time
 
 
-MUSIC_ROOT_DIR =  'E:\\Music-Beets'
+MUSIC_ROOT_DIR =  'E:\\Music-Beets'  # Must be an absolute path.
 BEETS_DB_FILEPATH = '/home/bart/music_library.db'
 TAGCACHE_FILEPATH = '/home/bart/tagcache_test'
 GENRE_DELIMITER = ','
@@ -21,7 +21,7 @@ if __name__ == '__main__':
         import ntpath as ospath
 
     # Database connection
-    db_connection = sqlite3.connect(BEETS_DB_FILEPATH, detect_types=sqlite3.PARSE_COLNAMES)
+    db_connection = sqlite3.connect(BEETS_DB_FILEPATH)
     cursor = db_connection.cursor()
 
     # Tagcache file initialisation
