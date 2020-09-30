@@ -4,20 +4,21 @@ import sqlite3
 import os
 import time
 
+
+MUSIC_ROOT_DIR =  'E:\\Music-Beets'
+BEETS_DB_FILEPATH = '/home/bart/music_library.db'
+TAGCACHE_FILEPATH = '/home/bart/tagcache_test'
+GENRE_DELIMITER = ','
+MPD_VERSION = '0.21.19'
+
+
 if __name__ == '__main__':
     starttime = time.time()
 
-    LIB_ROOTPATH =  'E:\\Music-Beets'
-    BEETS_DB_FILEPATH = '/home/bart/music_library.db'
-    TAGCACHE_FILEPATH = '/home/bart/tagcache_test'
-    GENRE_DELIMITER = ','
-
-
-    if LIB_ROOTPATH[0] == "/":
+    if MUSIC_ROOT_DIR[0] == '/':
         import posixpath as ospath
     else:
         import ntpath as ospath
-
 
     # Database connection
     db_connection = sqlite3.connect(BEETS_DB_FILEPATH, detect_types=sqlite3.PARSE_COLNAMES)
@@ -95,7 +96,7 @@ if __name__ == '__main__':
     ) in cursor:
         if isinstance(path, bytes):
             path = path.decode('utf8')
-        album_directory = ospath.dirname(path[len(LIB_ROOTPATH):]).lstrip(ospath.sep)
+        album_directory = ospath.dirname(path[len(MUSIC_ROOT_DIR):]).lstrip(ospath.sep)
 
         # `genre` can be comma separated multi-valued, so rename it to `genres`
         # for clarity while parsing.
@@ -106,31 +107,31 @@ if __name__ == '__main__':
 
         # If album changed, close the previous block
         if album_directory != last_processed_album_directory and last_processed_album_directory is not None:
-                tagcache_filehandle.write("end: %s\n" % last_processed_album_directory) # previous directory :)
+            tagcache_filehandle.write('end: %s\n' % last_processed_album_directory) # previous directory :)
 
         # If album changed, open new block
         if album_directory != last_processed_album_directory:
-            tagcache_filehandle.write("directory: %s\n" % album_directory) 
-            tagcache_filehandle.write("mtime: 0\n") 
-            tagcache_filehandle.write("begin: %s\n" % album_directory)
+            tagcache_filehandle.write('directory: %s\n' % album_directory) 
+            tagcache_filehandle.write('mtime: 0\n') 
+            tagcache_filehandle.write('begin: %s\n' % album_directory)
             last_processed_album_directory = album_directory
 
         # Write song block
-        tagcache_filehandle.write("song_begin: %s\n" % path.split(ospath.sep)[-1])
-        tagcache_filehandle.write("Time: %.6f\n" % length)
-        tagcache_filehandle.write("Artist: %s\n" % artist)
-        tagcache_filehandle.write("Album: %s\n" % album)
-        tagcache_filehandle.write("AlbumArtist: %s\n" % albumartist)
-        tagcache_filehandle.write("Title: %s\n" % title)
-        tagcache_filehandle.write("Track: %s\n" % track)
+        tagcache_filehandle.write('song_begin: %s\n' % path.split(ospath.sep)[-1])
+        tagcache_filehandle.write('Time: %.6f\n' % length)
+        tagcache_filehandle.write('Artist: %s\n' % artist)
+        tagcache_filehandle.write('Album: %s\n' % album)
+        tagcache_filehandle.write('AlbumArtist: %s\n' % albumartist)
+        tagcache_filehandle.write('Title: %s\n' % title)
+        tagcache_filehandle.write('Track: %s\n' % track)
         for genre_ in genres:
-                tagcache_filehandle.write("Genre: %s\n" % genre_)
-        tagcache_filehandle.write("Date: %s\n" % year)
-        tagcache_filehandle.write("Disc: %s\n" % disc)
-        tagcache_filehandle.write("Composer: %s\n" % composer)
-        tagcache_filehandle.write("Performer: %s\n" % arranger) # Not sure about this one
-        tagcache_filehandle.write("mtime: 0\n") 
-        tagcache_filehandle.write("song_end\n")
+            tagcache_filehandle.write('Genre: %s\n' % genre_)
+        tagcache_filehandle.write('Date: %s\n' % year)
+        tagcache_filehandle.write('Disc: %s\n' % disc)
+        tagcache_filehandle.write('Composer: %s\n' % composer)
+        tagcache_filehandle.write('Performer: %s\n' % arranger) # Not sure about this one
+        tagcache_filehandle.write('mtime: 0\n') 
+        tagcache_filehandle.write('song_end\n')
 
     # Cleanup
     cursor.close()
@@ -138,4 +139,4 @@ if __name__ == '__main__':
     tagcache_filehandle.close()
 
     endtime = time.time()
-    print("It took {:.8f} seconds.".format(endtime-starttime))
+    print('It took {:.3f} seconds.'.format(endtime-starttime))
