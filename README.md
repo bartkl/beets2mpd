@@ -7,14 +7,14 @@ It has only been used on Linux so far, but it should work on Windows and Mac as 
 Make sure you have Python 3.7 or higher installed. Other than that, there are no dependencies.
 
 Then, copy the `beets2mpd.py` file somewhere you like. That's all there's to it.
+
 If you want to be able to invoke the script directly, make sure the shebang line correctly identifies your Python interpreter, and the excution bit is set on the file.
 
-Personally, I have renamed the file to `beets2mpd` and placed it in `/usr/local/bin`.
+Personally, I have renamed the file to `beets2mpd`, made it executable and placed it in `/usr/local/bin`.
 
 ## How to use
 ### Configuration
-There is no config file, because I wanted to keep things simple and performant, so configuration is done through changing some variables in the `beets2mpd.py` file.
-At the top of that file, you'll find the following variables to tweak:
+There is no config file, because I wanted to keep things simple and performant, so configuration is done through changing some variables in the `beets2mpd.py` file. At the top of that file, you'll find the following variables to tweak:
 
 - `MUSIC_ROOT_DIR`: This should point to the base path of your music library files. This path is subtracted from the `path` field of all items in the Beets database, so that they are relative to this base dir. Then, in your MPD config the `music_directory` setting should also point to this base path, and all should be well.
     - Note: this path should be provided in absolute form.
