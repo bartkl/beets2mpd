@@ -6,8 +6,8 @@ import sys
 import time
 
 
-MUSIC_ROOT_DIR = r'E:\Music-Beets'
-BEETS_DB_FILEPATH = '/home/bart/music_library.db'
+MUSIC_ROOT_DIR = '/media/droppie/libraries/music'
+BEETS_DB_FILEPATH = '/media/droppie/libraries/music/.config/beets/library.db'
 MPD_DB_FORMAT = 2
 TAGCACHE_FILEPATH = '/home/bart/tagcache_test'
 GENRE_DELIMITER = ', '
@@ -72,14 +72,17 @@ tag: Track
 tag: Name
 tag: Genre
 tag: Date
+tag: OriginalDate
 tag: Composer
 tag: Performer
 tag: Disc
+tag: Label
 tag: MUSICBRAINZ_ARTISTID
 tag: MUSICBRAINZ_ALBUMID
 tag: MUSICBRAINZ_ALBUMARTISTID
 tag: MUSICBRAINZ_TRACKID
 tag: MUSICBRAINZ_RELEASETRACKID
+tag: MUSICBRAINZ_WORKID
 info_end
 ''')
 
