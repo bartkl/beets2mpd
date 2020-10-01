@@ -6,10 +6,13 @@ import sys
 import time
 
 
+# Config.
 MUSIC_ROOT_DIR = '/media/droppie/libraries/music'
+# MUSIC_ROOT_DIR = 'E:\\Music-Beets'
+# BEETS_DB_FILEPATH = '/home/bart/music_library.db'
 BEETS_DB_FILEPATH = '/media/droppie/libraries/music/.config/beets/library.db'
 MPD_DB_FORMAT = 2
-TAGCACHE_FILEPATH = '/home/bart/tagcache_test'
+TAGCACHE_FILEPATH = '/home/bart/tag_cache'
 GENRE_DELIMITER = ', '
 MPD_VERSION = '0.21.19'
 
@@ -86,7 +89,7 @@ tag: MUSICBRAINZ_WORKID
 info_end
 ''')
 
-    last_processed_album_directory = None
+    path_cursor = []
     for (path,
          length,
          artist,
@@ -99,31 +102,38 @@ info_end
          disc,
          composer,
          arranger) in cursor:
-        if isinstance(path, bytes):
-            path = path.decode('utf-8')
-        album_directory = ospath.dirname(path[len(MUSIC_ROOT_DIR):]).lstrip(ospath.sep)
-
         # `genre` can be multi-valued, so rename it to `genres` for clarity while parsing.
         if genre:
             genres = genre.split(GENRE_DELIMITER)
         else:
             genres = ''
 
-        # If album changed, close the previous block.
-        if album_directory != last_processed_album_directory and last_processed_album_directory is not None:
-            # Previous directory:
-            tagcache_filehandle.write(f'''\
-end: {last_processed_album_directory}
+        if isinstance(path, bytes):
+            path = path.decode('utf-8')
+
+        album_directory = ospath.dirname(path[len(MUSIC_ROOT_DIR):]).lstrip(ospath.sep)
+        albumdir_parts = album_directory.split(ospath.sep)
+
+        if path_cursor != albumdir_parts:
+            if path_cursor:
+                first_diff_idx = [x[0]==x[1] for x in zip(albumdir_parts, path_cursor)].index(False)
+
+                # If album changed, close the necessary directories.
+                for i, p in enumerate(path_cursor[:first_diff_idx-len(path_cursor)-1:-1]):
+                    tagcache_filehandle.write(f'''\
+end: {os.sep.join(path_cursor[:len(path_cursor)-i])}
 ''')
 
-        # If album changed, open new block.
-        if album_directory != last_processed_album_directory:
-            tagcache_filehandle.write(f'''\
-directory: {album_directory}
+            # If album changed, open the necessary new blocks.
+            start_idx = first_diff_idx if path_cursor else 0
+            for i, p in enumerate(albumdir_parts[start_idx:]):
+                path_ = os.sep.join(albumdir_parts[:start_idx+i+1])
+                tagcache_filehandle.write(f'''\
+directory: {p}
 mtime: 0
-begin: {album_directory}
+begin: {path_}
 ''')
-            last_processed_album_directory = album_directory
+            path_cursor = albumdir_parts
 
         # Write song block.
         tagcache_filehandle.write(f'''\
@@ -145,6 +155,13 @@ Performer: {arranger}
 mtime: 0
 song_end
 ''')
+
+    # Close final directories.
+    for i, _ in enumerate(path_cursor[::-1]):
+        tagcache_filehandle.write(f'''\
+end: {os.sep.join(path_cursor[:len(path_cursor)-i])}
+''')
+
 
     # Cleanup.
     cursor.close()
