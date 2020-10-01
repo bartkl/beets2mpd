@@ -31,25 +31,26 @@ if __name__ == '__main__':
     fs_charset = sys.getfilesystemencoding().upper()
     print(f"Using filesystem character set: {fs_charset}.")
 
-    # Windows paths or UNIX paths.
+    # Determine path format.
     if MUSIC_ROOT_DIR[0] == '/':
-        print("Detected Windows paths.")
+        print("Library seems to use Windows paths.")
         import posixpath as ospath
     else:
+        print("Library seems to use POSIX paths.")
         import ntpath as ospath
 
     # Database connection.
     print("Connecting to Beets database...", end='')
-    db_connection = sqlite3.connect(BEETS_DB_FILEPATH)
+    beets_conn = sqlite3.connect(BEETS_DB_FILEPATH)
     print(" OK.")
-    cursor = db_connection.cursor()
+    beets_cursor = beets_conn.cursor()
 
     # Tagcache file initialisation.
-    tagcache_filehandle = open(TAGCACHE_FILEPATH, 'w')
+    tagcache = open(TAGCACHE_FILEPATH, 'w')
 
     # Query the Beets database for all items.
     print("Preparing query on Beets database...", end='')
-    cursor.execute('''
+    beets_cursor.execute('''
         select
             items.path,
             items.length,
@@ -72,9 +73,9 @@ if __name__ == '__main__':
     ''')
     print(" OK.")
 
-    print("Writing MPD tag cache file...", end="")
+    print("Writing MPD tag cache file...", end='')
     # Write tag_cache header.
-    tagcache_filehandle.write(f'''\
+    tagcache.write(f'''\
 info_begin
 format: {MPD_DB_FORMAT}
 mpd_version: {MPD_VERSION}
@@ -104,6 +105,8 @@ tag: MUSICBRAINZ_WORKID
 info_end
 ''')
 
+    # This list keeps track of what directory we're in.
+    # Based on this, I can close and open directory blocks during iteration.
     path_cursor = []
     for (path,
          length,
@@ -116,45 +119,55 @@ info_end
          year,
          disc,
          composer,
-         arranger) in cursor:
-        # `genre` can be multi-valued, so rename it to `genres` for clarity while parsing.
+         arranger) in beets_cursor:
+
+        # Parse the `genre` value which could be multi-valued.
         if genre:
             genres = genre.split(GENRE_DELIMITER)
         else:
             genres = ''
 
         if isinstance(path, bytes):
-            path = path.decode('utf-8')
+            path = path.decode(fs_charset)
 
-        album_directory = ospath.dirname(path[len(MUSIC_ROOT_DIR):]).lstrip(ospath.sep)
-        albumdir_parts = album_directory.split(ospath.sep)
+        # Get album dir relative to `MUSIC_ROOT_DIR`.
+        album_dir = ospath.dirname(path[len(MUSIC_ROOT_DIR):]).lstrip(ospath.sep)
+        album_dir_parts = album_dir.split(ospath.sep)
 
-        if path_cursor != albumdir_parts:
+        # Check if we're still working on the same directory, and if not: handle that.
+        if path_cursor != album_dir_parts:
+            # If this is the first entry, `path_cursor` is empty so there's nothing to close.
             if path_cursor:
-                # print('.', end="")  # One dot for every finished album.
-                                      # BUG: Outputs only when done. Has to
-                                      # do with `end` parameter.
-                first_diff_idx = [x[0]==x[1] for x in zip(albumdir_parts, path_cursor)].index(False)
 
-                # If album changed, close the necessary directories.
-                for i, p in enumerate(path_cursor[:first_diff_idx-len(path_cursor)-1:-1]):
-                    tagcache_filehandle.write(f'''\
-end: {os.sep.join(path_cursor[:len(path_cursor)-i])}
+                # Album changed, close the necessary directories.
+                first_diff_idx = [t[0] == t[1]  # Determine the index from which the path
+                                                # cursor and current album path are different.
+                                                # This allows you to close the difference on
+                                                # `path_cursor`, and open directory blocks for
+                                                # the difference in `album_dir_parts`.
+                    for t in zip(album_dir_parts, path_cursor)].index(False)
+
+                # Close dir blocks that are done.
+                from_end_to_first_diff = slice(-1, first_diff_idx-len(path_cursor)-1, -1)
+                for i, _ in enumerate(path_cursor[from_end_to_first_diff]):
+                    from_start_to_i = slice(0, len(path_cursor) - i)
+                    tagcache.write(f'''\
+end: {os.sep.join(path_cursor[from_start_to_i])}
 ''')
 
-            # If album changed, open the necessary new blocks.
+            # Album changed, so open the necessary new blocks.
             start_idx = first_diff_idx if path_cursor else 0
-            for i, p in enumerate(albumdir_parts[start_idx:]):
-                path_ = os.sep.join(albumdir_parts[:start_idx+i+1])
-                tagcache_filehandle.write(f'''\
-directory: {p}
+            for i, path_part in enumerate(album_dir_parts[start_idx:]):
+                from_first_diff_to_i = slice(0, start_idx + i + 1)
+                tagcache.write(f'''\
+directory: {path_part}
 mtime: 0
-begin: {path_}
+begin: {os.sep.join(album_dir_parts[from_first_diff_to_i])}
 ''')
-            path_cursor = albumdir_parts
+            path_cursor = album_dir_parts
 
         # Write song block.
-        tagcache_filehandle.write(f'''\
+        tagcache.write(f'''\
 song_begin: {path.split(ospath.sep)[-1]}
 Time: {length:.6f}
 Artist: {artist}
@@ -164,8 +177,8 @@ Title: {title}
 Track: {track}
 ''')
         for genre_value in genres:
-            tagcache_filehandle.write(f'Genre: {genre_value}' + os.linesep)
-        tagcache_filehandle.write(f'''\
+            tagcache.write(f'Genre: {genre_value}' + os.linesep)
+        tagcache.write(f'''\
 Date: {year}
 Disc: {disc}
 Composer: {composer}
@@ -176,17 +189,18 @@ song_end
 
     # Close final directories.
     for i, _ in enumerate(path_cursor[::-1]):
-        tagcache_filehandle.write(f'''\
-end: {os.sep.join(path_cursor[:len(path_cursor)-i])}
+        from_start_to_i = slice(0, len(path_cursor) - i)
+        tagcache.write(f'''\
+end: {os.sep.join(path_cursor[from_start_to_i])}
 ''')
     # print('.', end='')
     print(" OK.")
 
     print("Cleaning up...", end='')
     # Cleanup.
-    cursor.close()
-    db_connection.close()
-    tagcache_filehandle.close()
+    beets_cursor.close()
+    beets_conn.close()
+    tagcache.close()
     print(" OK.")
 
     print()
