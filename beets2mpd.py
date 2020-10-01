@@ -6,36 +6,49 @@ import sys
 import time
 
 
-# Config.
-MUSIC_ROOT_DIR = '/media/droppie/libraries/music'
-# MUSIC_ROOT_DIR = 'E:\\Music-Beets'
-# BEETS_DB_FILEPATH = '/home/bart/music_library.db'
-BEETS_DB_FILEPATH = '/media/droppie/libraries/music/.config/beets/library.db'
-MPD_DB_FORMAT = 2
+### Config.
+
+# Paths.
+# MUSIC_ROOT_DIR = '/media/droppie/libraries/music'
+MUSIC_ROOT_DIR = 'E:\\Music-Beets'
+# BEETS_DB_FILEPATH = '/media/droppie/libraries/music/.config/beets/library.db'
+BEETS_DB_FILEPATH = '/home/bart/music_library.db'
 TAGCACHE_FILEPATH = '/home/bart/tag_cache'
-GENRE_DELIMITER = ', '
+
+# MPD.
+MPD_DB_FORMAT = 2
 MPD_VERSION = '0.21.19'
 
+# Delimiter used for multi-valued genres in Beets's `genre` field.
+GENRE_DELIMITER = ', '
+
+
+### Main.
 
 if __name__ == '__main__':
-    starttime = time.time()
+    script_start_time = time.time()
 
     fs_charset = sys.getfilesystemencoding().upper()
+    print(f"Using filesystem character set: {fs_charset}.")
 
     # Windows paths or UNIX paths.
     if MUSIC_ROOT_DIR[0] == '/':
+        print("Detected Windows paths.")
         import posixpath as ospath
     else:
         import ntpath as ospath
 
     # Database connection.
+    print("Connecting to Beets database...", end='')
     db_connection = sqlite3.connect(BEETS_DB_FILEPATH)
+    print(" OK.")
     cursor = db_connection.cursor()
 
     # Tagcache file initialisation.
     tagcache_filehandle = open(TAGCACHE_FILEPATH, 'w')
 
     # Query the Beets database for all items.
+    print("Preparing query on Beets database...", end='')
     cursor.execute('''
         select
             items.path,
@@ -57,7 +70,9 @@ if __name__ == '__main__':
 
         order by items.path, items.track
     ''')
+    print(" OK.")
 
+    print("Writing MPD tag cache file...", end="")
     # Write tag_cache header.
     tagcache_filehandle.write(f'''\
 info_begin
@@ -116,6 +131,9 @@ info_end
 
         if path_cursor != albumdir_parts:
             if path_cursor:
+                # print('.', end="")  # One dot for every finished album.
+                                      # BUG: Outputs only when done. Has to
+                                      # do with `end` parameter.
                 first_diff_idx = [x[0]==x[1] for x in zip(albumdir_parts, path_cursor)].index(False)
 
                 # If album changed, close the necessary directories.
@@ -161,12 +179,15 @@ song_end
         tagcache_filehandle.write(f'''\
 end: {os.sep.join(path_cursor[:len(path_cursor)-i])}
 ''')
+    # print('.', end='')
+    print(" OK.")
 
-
+    print("Cleaning up...", end='')
     # Cleanup.
     cursor.close()
     db_connection.close()
     tagcache_filehandle.close()
+    print(" OK.")
 
-    endtime = time.time()
-    print('It took {:.3f} seconds.'.format(endtime-starttime))
+    print()
+    print(f'Finished OK. ({time.time() - script_start_time:.3f} secs)')
