@@ -9,11 +9,9 @@ import time
 ### Config.
 
 # Paths.
-# MUSIC_ROOT_DIR = '/media/droppie/libraries/music'
-MUSIC_ROOT_DIR = 'E:\\Music-Beets'
-# BEETS_DB_FILEPATH = '/media/droppie/libraries/music/.config/beets/library.db'
-BEETS_DB_FILEPATH = '/home/bart/music_library.db'
-TAGCACHE_FILEPATH = '/home/bart/tag_cache'
+MUSIC_ROOT_DIR = '/media/droppie/libraries/music'
+BEETS_DB_FILEPATH = '/media/droppie/libraries/music/.config/beets/library.db'
+TAGCACHE_FILEPATH = '/media/droppie/libraries/music/.config/mpd/tag_cache'
 
 # MPD.
 MPD_DB_FORMAT = 2
@@ -55,15 +53,24 @@ if __name__ == '__main__':
             items.path,
             items.length,
             items.artist,
+            items.artist_sort,
             items.album,
             albums.albumartist,
+            albums.albumartist_sort,
             items.title,
             items.track,
             albums.genre,
             albums.year,
+            albums.original_year,
             items.disc,
             items.composer,
-            items.arranger
+            items.arranger,
+            items.mb_artistid,
+            albums.mb_albumartistid,
+            albums.mb_albumid,
+            items.mb_trackid,
+            items.mb_releasetrackid,
+            albums.label
         from items
 
         left join albums
@@ -111,15 +118,24 @@ info_end
     for (path,
          length,
          artist,
+         artist_sort,
          album,
          albumartist,
+         albumartist_sort,
          title,
          track,
          genre,
          year,
+         original_year,
          disc,
          composer,
-         arranger) in beets_cursor:
+         arranger,
+         mb_artistid,
+         mb_albumartistid,
+         mb_albumid,
+         mb_trackid,
+         mb_releaseid,
+         label) in beets_cursor:
 
         # Parse the `genre` value which could be multi-valued.
         if genre:
@@ -170,19 +186,27 @@ begin: {os.sep.join(album_dir_parts[from_first_diff_to_i])}
         tagcache.write(f'''\
 song_begin: {path.split(ospath.sep)[-1]}
 Time: {length:.6f}
-Artist: {artist}
 Album: {album}
 AlbumArtist: {albumartist}
+AlbumArtistSort: {albumartist_sort}
+Artist: {artist}
+ArtistSort: {artist_sort}
 Title: {title}
+Label: {label}
 Track: {track}
 ''')
         for genre_value in genres:
             tagcache.write(f'Genre: {genre_value}' + os.linesep)
         tagcache.write(f'''\
 Date: {year}
+OriginalDate: {original_year}
 Disc: {disc}
 Composer: {composer}
-Performer: {arranger}
+MUSICBRAINZ_ARTISTID: {mb_artistid}
+MUSICBRAINZ_ALBUMID: {mb_albumid}
+MUSICBRAINZ_ALBUMARTISTID: {mb_albumartistid}
+MUSICBRAINZ_TRACKID: {mb_trackid}
+MUSICBRAINZ_RELEASETRACKID: {mb_releaseid}
 mtime: 0
 song_end
 ''')
