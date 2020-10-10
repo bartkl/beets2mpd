@@ -10,8 +10,8 @@ import time
 
 # Paths.
 MUSIC_ROOT_DIR = '/media/droppie/libraries/music'
-BEETS_DB_FILEPATH = '/media/droppie/libraries/music/.config/beets/library.db'
-TAGCACHE_FILEPATH = '/media/droppie/libraries/music/.config/mpd/tag_cache'
+BEETS_DB_FILEPATH = '/media/droppie/libraries/music/.meta/beets/library.db'
+TAGCACHE_FILEPATH = '/media/droppie/libraries/music/.meta/mpd/tag_cache'
 
 # MPD.
 MPD_DB_FORMAT = 2
@@ -31,10 +31,10 @@ if __name__ == '__main__':
 
     # Determine path format.
     if MUSIC_ROOT_DIR[0] == '/':
-        print("Library seems to use Windows paths.")
+        print("Library seems to use POSIX paths.")
         import posixpath as ospath
     else:
-        print("Library seems to use POSIX paths.")
+        print("Library seems to use Windows paths.")
         import ntpath as ospath
 
     # Database connection.
