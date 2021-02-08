@@ -146,6 +146,9 @@ info_end
         if isinstance(path, bytes):
             path = path.decode(fs_charset)
 
+        mtime_item = os.path.getmtime(path)
+        mtime_album = os.path.getmtime(os.path.dirname(path))
+
         # Get album dir relative to `MUSIC_ROOT_DIR`.
         album_dir = ospath.dirname(path[len(MUSIC_ROOT_DIR):]).lstrip(ospath.sep)
         album_dir_parts = album_dir.split(ospath.sep)
@@ -177,7 +180,7 @@ end: {os.sep.join(path_cursor[from_start_to_i])}
                 from_first_diff_to_i = slice(0, start_idx + i + 1)
                 tagcache.write(f'''\
 directory: {path_part}
-mtime: 0
+mtime: {mtime_album}
 begin: {os.sep.join(album_dir_parts[from_first_diff_to_i])}
 ''')
             path_cursor = album_dir_parts
@@ -207,7 +210,7 @@ MUSICBRAINZ_ALBUMID: {mb_albumid}
 MUSICBRAINZ_ALBUMARTISTID: {mb_albumartistid}
 MUSICBRAINZ_TRACKID: {mb_trackid}
 MUSICBRAINZ_RELEASETRACKID: {mb_releaseid}
-mtime: 0
+mtime: {mtime_item}
 song_end
 ''')
 
