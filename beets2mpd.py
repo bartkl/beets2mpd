@@ -20,6 +20,10 @@ MPD_VERSION = '0.21.19'
 # Delimiter used for multi-valued genres in Beets's `genre` field.
 GENRE_DELIMITER = ', '
 
+# Retrieve and write actual modified times for files and dirs.
+# NOTE: This makes the script significantly slower.
+SET_MTIME = True
+
 
 ### Main.
 
@@ -146,8 +150,12 @@ info_end
         if isinstance(path, bytes):
             path = path.decode(fs_charset)
 
-        mtime_item = os.path.getmtime(path)
-        mtime_album = os.path.getmtime(os.path.dirname(path))
+        if SET_MTIME:
+            mtime_item = os.path.getmtime(path)
+            mtime_album = os.path.getmtime(os.path.dirname(path))
+        else:
+            mtime_item = 0
+            mtime_album = 0
 
         # Get album dir relative to `MUSIC_ROOT_DIR`.
         album_dir = ospath.dirname(path[len(MUSIC_ROOT_DIR):]).lstrip(ospath.sep)
