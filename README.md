@@ -60,8 +60,9 @@ If you **can** modify your music files, the setup is usually pretty straight-for
 However, if you can't, you have to alter your setup to make things work right. Before I thought of this script, what I'd do is configure Beets to copy imported files to a designated library directory, and then apply the writes on those files.
 
 This is a clean solution, but it has drawbacks:
-    * It makes importing a lot slower due to the copying of potentially large amounts of data.
-    * It's costly on storage to have to duplicate all your files.
+
+* It makes importing a lot slower due to the copying of potentially large amounts of data.
+* It's costly on storage to have to duplicate all your files.
 
 ### Why not BPD
 Beets's BPD plugin is a partial implementation of the MPD protocol which uses the Beets DB for music metadata, instead of the tag cache which is generated from the audio files's tags.
