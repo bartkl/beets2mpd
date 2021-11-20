@@ -74,7 +74,6 @@ The solution I envisioned is simpler: use the original MPD, but provide it with 
 This script originally was written by reverse engineering what my MPD tag cache file looked like. So far I'm aware of the following limitations of my implementation:
 
 * Only regular files are supported, so no archives, containers or playlists.
-* All `mtime` fields in the tag cache file are set to `0`.
 
 ## Caveats
 * The biggest issue is that as soon as you or some of your MPD clients triggers a database reload, this will regenerate the tag cache using the original audio file tags source. This means that to use this solution stably, you must make sure such a reload never gets triggered.
