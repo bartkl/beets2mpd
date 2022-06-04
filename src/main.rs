@@ -1,7 +1,27 @@
-use std::time::Instant;
-use std::fs::File;
-use std::io::{Write};
 use rusqlite::{Connection, Result};
+use std::fs::File;
+use std::io::Write;
+use std::time::Instant;
+
+//// Config.
+
+// Paths.
+const MUSIC_ROOT_DIR: &str = "/media/droppie/libraries/music";
+const BEETS_DB_FILEPATH: &str = "/media/droppie/libraries/music/.meta/beets/library.db";
+const TAGCACHE_FILEPATH: &str = "/media/droppie/libraries/music/.meta/mpd/tag_cache";
+
+// MPD.
+const MPD_DB_FORMAT: u8 = 2;
+const MPD_VERSION: &str = "0.21.19";
+
+// Delimiter used for multi-valued genres in Beets's `genre` field.
+const GENRE_DELIMITER: &str = ", ";
+
+// Retrieve and write actual modified times for files and dirs.
+// Note that this makes the script significantly slower.
+const SET_MTIME: bool = true;
+
+//// Types.
 
 #[derive(Debug)]
 struct DbItem {
@@ -25,7 +45,7 @@ struct DbItem {
     mb_albumid: String,
     mb_trackid: String,
     mb_releasetrackid: String,
-    label: String
+    label: String,
 }
 
 #[derive(Debug)]
@@ -36,24 +56,14 @@ struct Track {
     mtime_album: Option<u32>,
 }
 
-fn process_item(item: DbItem) -> Track {
-    let genres = item.genre.split(", ").map(|s| s.to_owned()).collect();
-
-    Track {
-        db_item: item,
-        genres: genres,
-        mtime_item: Some(0),
-        mtime_album: Some(0)
-    }
-}
-
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let start = Instant::now();
 
     let library_path = "library.db";
     let conn = Connection::open(&library_path)?;
 
-    let mut stmt = conn.prepare("
+    let mut stmt = conn.prepare(
+        "
         select
             items.path,
             items.length,
@@ -80,10 +90,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         left join albums
         on items.album_id = albums.id
         order by items.path, items.track
-    ")?;
+    ",
+    )?;
 
     let items_iter = stmt.query_map([], |row| {
-        Ok(process_item(DbItem {
+        let db_item = DbItem {
             path: row.get(0)?,
             length: row.get(1)?,
             artist: row.get(2)?,
@@ -104,8 +115,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             mb_albumid: row.get(17)?,
             mb_trackid: row.get(18)?,
             mb_releasetrackid: row.get(19)?,
-            label: row.get(20)?
-        }))
+            label: row.get(20)?,
+        };
+
+        let genres = db_item.genre.split(", ").map(|s| s.to_owned()).collect();
+        Ok(Track {
+            db_item,
+            genres,
+            mtime_item: Some(0),
+            mtime_album: Some(0),
+        })
     })?;
 
     let tag_cache_path = "tagcache".to_string();
@@ -115,7 +134,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         writeln!(output, "{}", track?.db_item.artist)?;
     }
 
-    let duration = start.elapsed(); 
+    let duration = start.elapsed();
     println!("Took: {}", duration.as_secs_f32());
     Ok(())
 }
