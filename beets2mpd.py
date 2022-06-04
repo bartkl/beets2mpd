@@ -4,7 +4,7 @@ import sqlite3
 import os
 import sys
 import time
-
+import tempfile
 
 ### Config.
 
@@ -43,15 +43,14 @@ if __name__ == '__main__':
 
     # Database connection.
     print("Connecting to Beets database...", end='')
+    sys.stdout.flush()
     beets_conn = sqlite3.connect(BEETS_DB_FILEPATH)
     print(" OK.")
     beets_cursor = beets_conn.cursor()
 
-    # Tagcache file initialisation.
-    tagcache = open(TAGCACHE_FILEPATH, 'w')
-
     # Query the Beets database for all items.
     print("Preparing query on Beets database...", end='')
+    sys.stdout.flush()
     beets_cursor.execute('''
         select
             items.path,
@@ -84,7 +83,12 @@ if __name__ == '__main__':
     ''')
     print(" OK.")
 
-    print("Writing MPD tag cache file...", end='')
+    print("Generating MPD tag cache...", end='')
+    sys.stdout.flush()
+
+    # Tagcache file initialisation.
+    tagcache = tempfile.TemporaryFile("r+")
+
     # Write tag_cache header.
     tagcache.write(f'''\
 info_begin
@@ -231,8 +235,17 @@ end: {os.sep.join(path_cursor[from_start_to_i])}
     # print('.', end='')
     print(" OK.")
 
-    print("Cleaning up...", end='')
+    # Sync tagcache to disk
+    print("Writing MPD tag cache file...", end='')
+    sys.stdout.flush()
+    with open(TAGCACHE_FILEPATH, "w") as out:
+        tagcache.seek(0)
+        out.write(tagcache.read())
+    print(" OK.")
+
     # Cleanup.
+    print("Cleaning up...", end='')
+    sys.stdout.flush()
     beets_cursor.close()
     beets_conn.close()
     tagcache.close()
