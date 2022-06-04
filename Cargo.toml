@@ -7,6 +7,3 @@ edition = "2021"
 
 [dependencies]
 rusqlite = "0.27.0"
-
-[target.armv7-unknown-linux-gnueabihf]
-image = "bartkl/oblomov:latest"
