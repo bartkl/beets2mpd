@@ -1,0 +1,12 @@
+[package]
+name = "beets2mpd"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+rusqlite = "0.27.0"
+
+[target.armv7-unknown-linux-gnueabihf]
+image = "bartkl/oblomov:latest"
