@@ -7,8 +7,8 @@ use std::time::Instant;
 
 // Paths.
 const MUSIC_ROOT_DIR: &str = "/media/droppie/libraries/music";
-const BEETS_DB_FILEPATH: &str = "/media/droppie/libraries/music/.meta/beets/library.db";
-const TAGCACHE_FILEPATH: &str = "/media/droppie/libraries/music/.meta/mpd/tag_cache";
+const BEETS_DB_FILEPATH: &str = "library.db";
+const TAGCACHE_FILEPATH: &str = "tag_cache";
 
 // MPD.
 const MPD_DB_FORMAT: u8 = 2;
@@ -59,9 +59,17 @@ struct Track {
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let start = Instant::now();
 
-    let library_path = "library.db";
-    let conn = Connection::open(&library_path)?;
+    let fs_charset = "UTF-8";  // TODO: Get from env.
+    println!("Using filesystem character set: {}.", fs_charset);
 
+    // Determine path format.
+    println!("Library seems to use POSIX paths.");  // TODO: Hardcoded for now.
+
+    // Database connection.
+    println!("Connecting to Beets database...");
+    let conn = Connection::open(&BEETS_DB_FILEPATH)?;
+
+    // Query the Beets database for all items.
     let mut stmt = conn.prepare(
         "
         select
@@ -126,12 +134,48 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             mtime_album: Some(0),
         })
     })?;
+    
+    // Tagcache file initialisation.
+    let tag_cache_path = String::from("tagcache");  // TODO: Use tempfile.
+    let mut tagcache = File::create(&tag_cache_path)?;
 
-    let tag_cache_path = "tagcache".to_string();
-    let mut output = File::create(&tag_cache_path)?;
+    // Write tag_cache header.
+    let tagcache_header = format!(
+"info_begin
+format: {MPD_DB_FORMAT}
+mpd_version: {MPD_VERSION}
+fs_charset: {fs_charset}
+tag: Artist
+tag: ArtistSort
+tag: Album
+tag: AlbumSort
+tag: AlbumArtist
+tag: AlbumArtistSort
+tag: Title
+tag: Track
+tag: Name
+tag: Genre
+tag: Date
+tag: OriginalDate
+tag: Composer
+tag: Performer
+tag: Disc
+tag: Label
+tag: MUSICBRAINZ_ARTISTID
+tag: MUSICBRAINZ_ALBUMID
+tag: MUSICBRAINZ_ALBUMARTISTID
+tag: MUSICBRAINZ_TRACKID
+tag: MUSICBRAINZ_RELEASETRACKID
+tag: MUSICBRAINZ_WORKID
+info_end");
+    tagcache.write(tagcache_header.as_bytes());
+
+    // This list keeps track of what directory we're in.
+    // Based on this, I can close and open directory blocks during iteration.
+    let mut path_cursor = Vec<String>::new();
 
     for track in items_iter {
-        writeln!(output, "{}", track?.db_item.artist)?;
+        writeln!(tagcache, "{}", track?.db_item.artist)?;
     }
 
     let duration = start.elapsed();
