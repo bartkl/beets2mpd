@@ -159,10 +159,11 @@ info_end
          mb_releaseid,
          label) in beets_cursor:
 
+        if not path:
+            continue
+
         if isinstance(path, bytes):
             path = path.decode(fs_charset)
-        elif not path:
-            continue
 
         # Parse the `genre` value which could be multi-valued.
         if genre:
