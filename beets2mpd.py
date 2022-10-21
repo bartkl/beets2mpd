@@ -161,7 +161,7 @@ info_end
 
         if isinstance(path, bytes):
             path = path.decode(fs_charset)
-        elif path is None:
+        elif not path:
             continue
 
         # Parse the `genre` value which could be multi-valued.
