@@ -159,14 +159,16 @@ info_end
          mb_releaseid,
          label) in beets_cursor:
 
+        if isinstance(path, bytes):
+            path = path.decode(fs_charset)
+        elif path is None:
+            continue
+
         # Parse the `genre` value which could be multi-valued.
         if genre:
             genres = genre.split(GENRE_DELIMITER)
         else:
             genres = ''
-
-        if isinstance(path, bytes):
-            path = path.decode(fs_charset)
 
         if SET_MTIME:
             mtime_item = os.path.getmtime(path)
