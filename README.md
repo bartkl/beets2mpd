@@ -25,7 +25,6 @@ There is no config file, because I wanted to keep things simple and performant, 
 - `GENRE_DELIMITER`: A string that delimites multiple genre values in the `genre` field. How this can be used is described in _Multiple genres_.
 - `MPD_VERSION`: The version of MPD on the system.
 - `MPD_DB_FORMAT`: An integer that encodes the format of the tag cache file. Unless you know what you're doing, don't change this value.
-- `SET_MTIME`: If set to `True`, actual modified time values will be read from the filesystem and written to the tag cache file. Otherwise, this will be `0`. For slow devices or filesystems this may speed up the script substantially.
 
 ### Running the script
 When all configuration is in place, it's as simple as running the script:
