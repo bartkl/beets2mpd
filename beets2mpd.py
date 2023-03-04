@@ -20,11 +20,6 @@ MPD_VERSION = '0.24'
 # Delimiter used for multi-valued genres in Beets's `genre` field.
 GENRE_DELIMITER = ', '
 
-# Retrieve and write actual modified times for files and dirs.
-# NOTE: This makes the script significantly slower.
-SET_MTIME = True
-
-
 ### Main.
 
 if __name__ == '__main__':
@@ -54,6 +49,8 @@ if __name__ == '__main__':
     beets_cursor.execute('''
         select
             items.path,
+            items.added as item_added,
+            albums.added as album_added,
             items.length,
             items.artist,
             items.artist_sort,
@@ -136,6 +133,8 @@ info_end
     # Based on this, I can close and open directory blocks during iteration.
     path_cursor = []
     for (path,
+         item_added,
+         album_added,
          length,
          artist,
          artist_sort,
@@ -173,13 +172,6 @@ info_end
         else:
             genres = ''
 
-        if SET_MTIME:
-            mtime_item = os.path.getmtime(path)
-            mtime_album = os.path.getmtime(os.path.dirname(path))
-        else:
-            mtime_item = 0
-            mtime_album = 0
-
         # Get album dir relative to `MUSIC_ROOT_DIR`.
         album_dir = ospath.dirname(path[len(MUSIC_ROOT_DIR):]).lstrip(ospath.sep)
         album_dir_parts = album_dir.split(ospath.sep)
@@ -211,7 +203,7 @@ end: {os.sep.join(path_cursor[from_start_to_i])}
                 from_first_diff_to_i = slice(0, start_idx + i + 1)
                 tagcache.write(f'''\
 directory: {path_part}
-mtime: {mtime_album}
+mtime: {album_added}
 begin: {os.sep.join(album_dir_parts[from_first_diff_to_i])}
 ''')
             path_cursor = album_dir_parts
@@ -245,7 +237,7 @@ MUSICBRAINZ_ALBUMARTISTID: {mb_albumartistid}
 MUSICBRAINZ_TRACKID: {mb_trackid}
 MUSICBRAINZ_RELEASETRACKID: {mb_releaseid}
 MUSICBRAINZ_WORKID: {mb_workid}
-mtime: {mtime_item}
+mtime: {item_added}
 song_end
 ''')
 
