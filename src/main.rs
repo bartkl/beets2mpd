@@ -1,7 +1,6 @@
 use rusqlite::{Connection, Result};
-use std::fs::File;
-use std::io::Write;
-use std::time::Instant;
+use std::fs;
+//use std::time::Instant;
 
 /* Config. */
 
@@ -17,6 +16,8 @@ const GENRE_DELIMITER: &str = ", ";
 #[derive(Debug)]
 struct DbItem {
     path: Vec<u8>,
+    item_added: f32,
+    album_added: f32,
     length: f32,
     artist: String,
     artist_sort: String,
@@ -39,21 +40,22 @@ struct DbItem {
     label: String,
 }
 
-//#[derive(Debug)]
-//struct Track {
-//    db_item: DbItem,
-//    genres: Vec<String>,
-//    mtime_item: Option<u32>,
-//    mtime_album: Option<u32>,
-//}
+#[derive(Debug)]
+struct Track {
+    db_item: DbItem,
+    genres: Vec<String>,
+}
 
 fn main() -> Result<()> {
     let conn = Connection::open(&BEETS_DB_FILEPATH)?;
 
+    //let mut stmt = conn.prepare("SELECT id, album FROM albums")?;
     let mut albums_stmt = conn.prepare(
         "
         select
             items.path,
+            items.added as item_added,
+            albums.added as album_added,
             items.length,
             items.artist,
             items.artist_sort,
@@ -78,14 +80,54 @@ fn main() -> Result<()> {
         left join albums
         on items.album_id = albums.id
         order by items.path, items.track
-    ",)?;
+    ")?;
+    let mut rows = albums_stmt.query_map([], |row| {
+        let db_item = DbItem {
+            path: row.get(0)?,
+            item_added: row.get(1)?,
+            album_added: row.get(2)?,
+            length: row.get(3)?,
+            artist: row.get(4)?,
+            artist_sort: row.get(5)?,
+            album: row.get(6)?,
+            albumartist: row.get(7)?,
+            albumartist_sort: row.get(8)?,
+            title: row.get(9)?,
+            track: row.get(10)?,
+            genre: row.get(11)?,
+            year: row.get(12)?,
+            original_year: row.get(13)?,
+            disc: row.get(14)?,
+            composer: row.get(15)?,
+            arranger: row.get(16)?,
+            mb_artistid: row.get(17)?,
+            mb_albumartistid: row.get(18)?,
+            mb_albumid: row.get(19)?,
+            mb_trackid: row.get(20)?,
+            mb_releasetrackid: row.get(21)?,
+            label: row.get(22)?,
+        };
 
-    let mut names = Vec::new();
-    let mut rows = albums_stmt.query([])?;
-    while let Some(row) = rows.next()? {
-        names.push(row.get(0)?);
+        let genres = db_item.genre.split(", ").map(|s| s.to_owned()).collect();
+        Ok(Track {
+            db_item,
+            genres,
+        })
+    })?;
+    for item in rows {
+        println!("Album: {:?}", item.unwrap());
     }
-    println!("{}", names.len());
+
+    fs::write(&TAGCACHE_FILEPATH, "HERREUW").expect("Could not write.");
+
+
+    //let mut rows = albums_stmt.query([])?;
+    //let mut names = Vec::new();
+    //while let Some(row) = rows.next()? {
+    //    println!("A");
+    //    //names.push(row.get(0)?);
+    //}
+    //println!("{}", names.len());
     //println!("{:?}", names);
     Ok(())
 }
