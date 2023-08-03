@@ -5,7 +5,7 @@ use std::fs;
 /* Config. */
 
 const MUSIC_ROOT_DIR: &str = "/media/droppie/libraries/music";
-const BEETS_DB_FILEPATH: &str = "library.db";
+const BEETS_DB_FILEPATH: &str = "examples/library.db";
 const TAGCACHE_FILEPATH: &str = "tag_cache";
 const MPD_DB_FORMAT: u8 = 2;
 const MPD_VERSION: &str = "0.24";
