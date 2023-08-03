@@ -40,11 +40,7 @@ struct DbItem {
     label: String,
 }
 
-#[derive(Debug)]
-struct Track {
-    db_item: DbItem,
-    genres: Vec<String>,
-}
+//genres: Vec<String>,
 
 fn main() -> Result<()> {
     let conn = Connection::open(&BEETS_DB_FILEPATH)?;
