@@ -84,7 +84,7 @@ This script originally was written by reverse engineering what my MPD tag cache 
 * This plugin has been created for personal use only and possibly needs work to perform on other devices and installations.
 
 ## Roadmap
-Although the code is already pretty optimized (if you were wondering why it is so devoid of structure and extremely iterative, this is why), Python is relatively slow nonetheless. For low-resource devices such as SoC's like the Raspberry Pi, this script can take seconds on large libraries.
+Although the code is already pretty optimized (if you were wondering why it is so devoid of structure and extremely iterative, this is why), Python is relatively slow nonetheless. For low-resource devices such as SoCs like the Raspberry Pi, this script can take seconds on large libraries.
 
 Options:
 * Redo the entire implementation in C. (Prefered)
