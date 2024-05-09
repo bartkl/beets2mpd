@@ -225,7 +225,7 @@ Track: {track}
             tagcache.write(f'Genre: {genre_value}' + os.linesep)
         tagcache.write(f'''\
 Date: {year}
-OriginalDate: {original_year}
+OriginalDate: {original_year or year}
 Disc: {disc}
 Composer: {composer}
 ComposerSort: {composer_sort}
