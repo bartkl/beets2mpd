@@ -15,7 +15,7 @@ TAGCACHE_FILEPATH = '/media/droppie/libraries/music/.meta/mpd/tag_cache'
 
 # MPD.
 MPD_DB_FORMAT = 2
-MPD_VERSION = '0.24'
+MPD_VERSION = '0.23.17'
 
 # Delimiter used for multi-valued genres in Beets's `genre` field.
 GENRE_DELIMITER = ', '
@@ -103,7 +103,6 @@ tag: AlbumSort
 tag: AlbumArtist
 tag: AlbumArtistSort
 tag: Title
-tag: TitleSort
 tag: Track
 tag: Genre
 tag: Date
